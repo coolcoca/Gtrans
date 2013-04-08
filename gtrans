@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+import urllib2
+import urllib
+import gzip
+import re
+import cStringIO
+import sys
+
+class gtrans:
+    def __init__(self):
+        self.headers = {
+            'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Encoding':'gzip, deflate',
+            'Accept-Language':'zh-cn,en-us;q=0.7,en;q=0.3',
+            'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:19.0) Gecko/20100101 Firefox/19.0',
+        }
+
+    def request_data(self,url):
+        req = urllib2.Request(url,headers=self.headers)
+        res = urllib2.urlopen(req,timeout=5).read()
+        try:
+            f_obj = cStringIO.StringIO(res)
+            res = gzip.GzipFile(mode='rb',fileobj=f_obj).read()
+        except IOError:
+            pass
+        return res
+
+    def query(self,text='hehe',sl='en',tl='zh-CN'):
+        params = {
+            'client':'t',
+            'hl':sl,
+            'ie':'UTF-8',
+            'multires':1,
+            'oe':'UTF-8',
+            'otf':2,
+            'sc':1,
+            'text':text,
+            'sl':sl,
+            'ssel':0,
+            'tl':tl,
+            'tsel':0,
+        }
+        base_url = 'http://translate.google.cn/translate_a/t?'
+        url = base_url + urllib.urlencode(params)
+        res = self.request_data(url)
+        reg = re.compile('\[\[\["(.+?)"')
+        print 'translate %s from %s to %s: %s'%(text,sl,tl,reg.match(res).group(1))
+
+def main():
+    gg = gtrans()
+    argc = len(sys.argv)
+    text ,sl,tl='','en','zh-CN'
+    if argc == 2:
+        text = sys.argv[1]
+    elif argc == 3:
+        sl,text = sys.argv[1:]
+    elif argc == 4:
+        sl,tl,text = sys.argv[1:]
+    gg.query(text,sl,tl)
+
+if __name__ == '__main__':
+    main()
